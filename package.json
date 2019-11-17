@@ -1,0 +1,32 @@
+{
+  "name": "ratp-project",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "ejs": "~2.6.1",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "mongoose": "^5.7.11",
+    "morgan": "~1.9.1",
+    "yargs": "^15.0.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "csv-parser": "^2.3.2",
+    "eslint": "^6.6.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "mocha": "^6.2.2",
+    "moment": "^2.24.0",
+    "sinon": "^7.5.0",
+    "sinon-test": "^2.4.0"
+  }
+}
