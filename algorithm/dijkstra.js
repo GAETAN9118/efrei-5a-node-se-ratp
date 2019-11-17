@@ -1,6 +1,6 @@
 class Path {
   constructor (cost, node) {
-    /** @member {Number} cost */
+    /** @member {Function} cost */
     this.cost = cost
     /** @member {Node} node */
     this.node = node
@@ -13,11 +13,13 @@ class Node {
    * @param {Array<Path>} paths
    */
   constructor (name, paths = []) {
+    /** @member {Boolean} */
+    this.visited = false
     /** @member {String} */
     this.name = name
     /** @member {Array<Link>} paths */
     this.paths = paths
-    /** @member {Number} totalCost */
+    /** @member {Number} distance */
     this.distance = Infinity
     /** @member {Node} visitedFrom */
     this.visitedFrom = null
@@ -37,7 +39,7 @@ class Node {
 
   /**
    * @param {Node} node
-   * @param {Number} cost
+   * @param {Function} cost
    */
   addNonOrientedPath (node, cost) {
     this.addOrientedPath(node, cost)
@@ -50,7 +52,7 @@ class Node {
    * The {@link Node}s returned are the nodes which were never calculated before
    * @returns {Node[]|null}
    */
-  calcNeighboursTentativeDistance () {
+  async calcNeighboursTentativeDistance () {
     /** @type {Node[]} */
     const toVisit = []
     for (const p of this.paths) {
@@ -60,7 +62,7 @@ class Node {
         toVisit.push(p.node)
       }
 
-      const newCost = p.cost + this.distance
+      const newCost = await p.cost() + this.distance
       if (newCost < p.node.distance) {
         p.node.distance = newCost
         p.node.visitedFrom = this
@@ -79,7 +81,7 @@ class Dijkstra {
    * @param {Node} endNode
    * @returns {Array<Node>}
    */
-  static shortestPathFirst (startNode, endNode) {
+  static async shortestPathFirst (startNode, endNode) {
     if (startNode === endNode) return []
     startNode.distance = 0
     startNode.visited = true
@@ -92,7 +94,7 @@ class Dijkstra {
         return Dijkstra.generatePath(endNode)
       }
 
-      const toVisit = curr.calcNeighboursTentativeDistance()
+      const toVisit = await curr.calcNeighboursTentativeDistance()
 
       for (let i = 0; i < toVisit.length; i++) {
         if (!listOfNodes.includes(toVisit[i])) {

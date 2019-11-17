@@ -20,32 +20,32 @@ function fixtureGenerator () {
     [n('3x1'), n('3x2'), n('3x3')]
   ]
 
-  nodes[0][0].addNonOrientedPath(nodes[0][1], 1)
-  nodes[0][0].addNonOrientedPath(nodes[1][0], 1)
-  nodes[0][0].addNonOrientedPath(nodes[1][1], 4)
+  nodes[0][0].addNonOrientedPath(nodes[0][1], async () => 1)
+  nodes[0][0].addNonOrientedPath(nodes[1][0], async () => 1)
+  nodes[0][0].addNonOrientedPath(nodes[1][1], async () => 4)
 
-  nodes[0][1].addNonOrientedPath(nodes[0][2], 2)
-  nodes[0][1].addNonOrientedPath(nodes[1][1], 4)
-  nodes[0][1].addNonOrientedPath(nodes[1][0], 8)
-  nodes[0][1].addNonOrientedPath(nodes[1][2], 4)
+  nodes[0][1].addNonOrientedPath(nodes[0][2], async () => 2)
+  nodes[0][1].addNonOrientedPath(nodes[1][1], async () => 4)
+  nodes[0][1].addNonOrientedPath(nodes[1][0], async () => 8)
+  nodes[0][1].addNonOrientedPath(nodes[1][2], async () => 4)
 
-  nodes[0][2].addNonOrientedPath(nodes[1][1], 7)
-  nodes[0][2].addNonOrientedPath(nodes[1][2], 2)
+  nodes[0][2].addNonOrientedPath(nodes[1][1], async () => 7)
+  nodes[0][2].addNonOrientedPath(nodes[1][2], async () => 2)
 
-  nodes[1][0].addNonOrientedPath(nodes[2][0], 2)
-  nodes[1][0].addNonOrientedPath(nodes[1][1], 1)
-  nodes[1][0].addNonOrientedPath(nodes[2][1], 2)
+  nodes[1][0].addNonOrientedPath(nodes[2][0], async () => 2)
+  nodes[1][0].addNonOrientedPath(nodes[1][1], async () => 1)
+  nodes[1][0].addNonOrientedPath(nodes[2][1], async () => 2)
 
-  nodes[1][1].addNonOrientedPath(nodes[2][0], 4)
-  nodes[1][1].addNonOrientedPath(nodes[2][1], 4)
-  nodes[1][1].addNonOrientedPath(nodes[2][2], 2)
-  nodes[1][1].addNonOrientedPath(nodes[1][2], 1)
+  nodes[1][1].addNonOrientedPath(nodes[2][0], async () => 4)
+  nodes[1][1].addNonOrientedPath(nodes[2][1], async () => 4)
+  nodes[1][1].addNonOrientedPath(nodes[2][2], async () => 2)
+  nodes[1][1].addNonOrientedPath(nodes[1][2], async () => 1)
 
-  nodes[1][2].addNonOrientedPath(nodes[2][1], 5)
-  nodes[1][2].addNonOrientedPath(nodes[2][2], 0)
+  nodes[1][2].addNonOrientedPath(nodes[2][1], async () => 5)
+  nodes[1][2].addNonOrientedPath(nodes[2][2], async () => 0)
 
-  nodes[2][1].addNonOrientedPath(nodes[2][0], 2)
-  nodes[2][1].addNonOrientedPath(nodes[2][2], 3)
+  nodes[2][1].addNonOrientedPath(nodes[2][0], async () => 2)
+  nodes[2][1].addNonOrientedPath(nodes[2][2], async () => 3)
 
   const startNode = nodes[0][1]
   const endNode = nodes[2][2]
@@ -55,66 +55,66 @@ function fixtureGenerator () {
 
 describe('Node', () => {
   describe('#calcNeighboursTentativeDistance', () => {
-    it('should not update visited neighbours', sinon.test(function () {
+    it('should not update visited neighbours', sinon.test(async function () {
       const curr = new Node('current')
       const visited = new Node('visited')
       const notVisited = new Node('not-visited')
 
       curr.distance = 1
 
-      curr.addNonOrientedPath(visited, 1)
+      curr.addNonOrientedPath(visited, () => 1)
       visited.visited = true
       visited.distance = 10
 
-      curr.addNonOrientedPath(notVisited, 2)
+      curr.addNonOrientedPath(notVisited, () => 2)
       notVisited.visited = false
       notVisited.distance = 2
 
-      curr.calcNeighboursTentativeDistance()
+      await curr.calcNeighboursTentativeDistance()
 
       expect(visited.distance).to.equal(10)
     }))
 
-    it('should update not-visited neighbours which current distance is higher than the newly calculated one', sinon.test(function () {
+    it('should update not-visited neighbours which current distance is higher than the newly calculated one', sinon.test(async function () {
       const curr = new Node('current')
       const visited = new Node('visited')
       const notVisited = new Node('not-visited')
 
       curr.distance = 1
 
-      curr.addNonOrientedPath(visited, 1)
+      curr.addNonOrientedPath(visited, async () => 1)
       visited.visited = true
       visited.distance = 10
 
-      curr.addNonOrientedPath(notVisited, 2)
+      curr.addNonOrientedPath(notVisited, async () => 2)
       notVisited.visited = false
       notVisited.distance = 5
 
-      curr.calcNeighboursTentativeDistance()
+      await curr.calcNeighboursTentativeDistance()
 
       expect(notVisited.distance).to.equal(curr.distance + 2)
     }))
 
-    it('should not update not-visited neighbours if their currently calculated distance is lower than the newly calculated one', sinon.test(function () {
+    it('should not update not-visited neighbours if their currently calculated distance is lower than the newly calculated one', sinon.test(async function () {
       const curr = new Node('current')
       const visited = new Node('visited')
       const notVisited = new Node('not-visited')
 
       curr.distance = 1
-      curr.addNonOrientedPath(visited, 1)
+      curr.addNonOrientedPath(visited, async () => 1)
       visited.visited = true
       visited.distance = 10
 
-      curr.addNonOrientedPath(notVisited, 2)
+      curr.addNonOrientedPath(notVisited, async () => 2)
       notVisited.visited = false
       notVisited.distance = 2
 
-      curr.calcNeighboursTentativeDistance()
+      await curr.calcNeighboursTentativeDistance()
 
       expect(notVisited.distance).to.equal(2)
     }))
 
-    it("should be able to update all necessary nodes' distances, not only the first found", sinon.test(function () {
+    it("should be able to update all necessary nodes' distances, not only the first found", sinon.test(async function () {
       const curr = new Node('current')
       const visited = new Node('visited')
       const notVisited = new Node('not-visited')
@@ -122,25 +122,25 @@ describe('Node', () => {
 
       curr.distance = 1
 
-      curr.addNonOrientedPath(visited, 1)
+      curr.addNonOrientedPath(visited, async () => 1)
       visited.visited = true
       visited.distance = 10
 
-      curr.addNonOrientedPath(notVisited, 2)
+      curr.addNonOrientedPath(notVisited, async () => 2)
       notVisited.visited = false
       notVisited.distance = Infinity
 
-      curr.addNonOrientedPath(notVisited2, 3)
+      curr.addNonOrientedPath(notVisited2, async () => 3)
       notVisited2.visited = false
       notVisited2.distance = Infinity
 
-      curr.calcNeighboursTentativeDistance()
+      await curr.calcNeighboursTentativeDistance()
 
       expect(notVisited.distance).to.equal(3)
       expect(notVisited2.distance).to.equal(4)
     }))
 
-    it('should return the list of all unvisited nodes that were previously marked at a Infinity distance', sinon.test(function () {
+    it('should return the list of all unvisited nodes that were previously marked at a Infinity distance', sinon.test(async function () {
       const curr = new Node('current')
       const visited = new Node('visited')
       const notVisited = new Node('not-visited')
@@ -149,23 +149,23 @@ describe('Node', () => {
 
       curr.distance = 1
 
-      curr.addNonOrientedPath(visited, 1)
+      curr.addNonOrientedPath(visited, async () => 1)
       visited.visited = true
       visited.distance = 10
 
-      curr.addNonOrientedPath(notVisited, 2)
+      curr.addNonOrientedPath(notVisited, async () => 2)
       notVisited.visited = false
       notVisited.distance = Infinity
 
-      curr.addNonOrientedPath(notVisited2, 3)
+      curr.addNonOrientedPath(notVisited2, async () => 3)
       notVisited2.visited = false
       notVisited2.distance = Infinity
 
-      curr.addNonOrientedPath(notVisited3, 3)
+      curr.addNonOrientedPath(notVisited3, async () => 3)
       notVisited3.visited = false
       notVisited3.distance = 5
 
-      const toVisit = curr.calcNeighboursTentativeDistance()
+      const toVisit = await curr.calcNeighboursTentativeDistance()
 
       expect(toVisit).to.include.members([notVisited, notVisited2])
       expect(toVisit).to.not.have.members([notVisited3])
@@ -175,17 +175,17 @@ describe('Node', () => {
 
 describe('Dijkstra', () => {
   describe('#shortestPath', () => {
-    it('should return an empty array if startNode === endNode', sinon.test(function () {
+    it('should return an empty array if startNode === endNode', sinon.test(async function () {
       const { nodes } = fixtureGenerator()
 
-      const result = Dijkstra.shortestPathFirst(nodes[0][0], nodes[0][0])
+      const result = await Dijkstra.shortestPathFirst(nodes[0][0], nodes[0][0])
       expect(result).to.be.an('array').that.is.empty
     }))
 
-    it('should find the shortest path between two specified nodes', sinon.test(function () {
+    it('should find the shortest path between two specified nodes', sinon.test(async function () {
       const { startNode, endNode, nodes } = fixtureGenerator()
 
-      const result = Dijkstra.shortestPathFirst(startNode, endNode)
+      const result = await Dijkstra.shortestPathFirst(startNode, endNode)
       // Dijkstra.printPath(result)
 
       expect(result).to.be.an('array').of.length(3)
