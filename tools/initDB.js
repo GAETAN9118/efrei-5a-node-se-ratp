@@ -1,4 +1,3 @@
-/* eslint camelcase: ["error", {ignoreDestructuring: true, properties: "never"}] */
 const debug = require('debug')('ratp:init-db')
 const argv = require('yargs')
   .usage('Usage: $0 [path]')
