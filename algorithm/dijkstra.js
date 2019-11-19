@@ -98,13 +98,14 @@ class Dijkstra {
     startNode.distance = initialDistance
     startNode.visited = true
 
-    debug('startNode distance', startNode.distance)
+    // debug('startNode distance', startNode.distance)
     const listOfNodes = [startNode]
 
     while (listOfNodes.length) {
       const curr = listOfNodes.shift()
+      debug('curr:', curr.name, listOfNodes.length)
       await curr.discover(curr, curr.distance)
-      debug('curr paths', curr.paths.map(_ => _.node.name))
+      // debug('curr paths', curr.paths.map(_ => _.node.name))
       curr.visited = true
       if (endNode === curr) {
         return Dijkstra.generatePath(endNode)
@@ -117,8 +118,6 @@ class Dijkstra {
           listOfNodes.push(toVisit[i])
         }
       }
-
-      debug('listOfNodes length', listOfNodes.map(_ => _.name))
 
       listOfNodes.sort((a, b) => {
         if (a.distance > b.distance) {
