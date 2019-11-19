@@ -30,7 +30,7 @@ function getStopsBetweenTwoStops (s1, s2) {
   const { stop_coords: { coordinates: c2 } } = s2
   const lonCenter = (c1[0] + c2[0]) / 2
   const latCenter = (c1[1] + c2[1]) / 2
-  const radius = Math.abs(c1[0] - c2[0])
+  const radius = Math.sqrt(((c1[0] - lonCenter) ** 2) + ((c1[1] - latCenter) ** 2)) * 1.2
   return Stop.find({
     stop_coords: {
       $geoWithin: {
@@ -39,18 +39,6 @@ function getStopsBetweenTwoStops (s1, s2) {
     }
   })
 }
-
-/*
-let day
-switch (today.getDay()) {
-  case 0: day = 'sunday'; break
-  case 1: day = 'monday'; break
-  case 2: day = 'tuesday'; break
-  case 3: day = 'wednesday'; break
-  case 4: day = 'thursday'; break
-  case 5: day = 'friday'; break
-  case 6: day = 'saturday'; break
-} */
 
 /**
  * @param {Stop} stop
