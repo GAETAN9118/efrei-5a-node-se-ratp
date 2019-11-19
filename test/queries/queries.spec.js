@@ -54,7 +54,7 @@ describe('queries.js', () => {
       const glaciere = await getStop('Glacière')
       const jussieu = await getStop('Jussieu')
       const results = await getStopsBetweenTwoStops(glaciere, jussieu)
-      expect(results).to.be.an('array').of.length(284)
+      expect(results).to.be.an('array').of.length(213)
     }))
   })
 
