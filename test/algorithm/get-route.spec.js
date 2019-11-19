@@ -7,6 +7,13 @@ const { DBPATH } = require('../../params.js')
 
 const getRoute = require('../../algorithm/get-route.js')
 
+function connect () {
+  mongoose.connect(DBPATH, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+}
+
 /**
  * These tests only work if the database is loaded with the
  * november 2019 set of GTFS files from the RATP.
@@ -18,22 +25,32 @@ const getRoute = require('../../algorithm/get-route.js')
 
 describe('get.route.controller.js', () => {
   before(() => {
-    mongoose.connect(DBPATH, { useNewUrlParser: true, useUnifiedTopology: true })
+    connect()
+    mongoose.connection.on('disconnected', () => {
+      console.log('-> lost connection')
+      connect()
+    })
+    mongoose.connection.on('reconnect', () => {
+      console.log('-> reconnected')
+    })
+    mongoose.connection.on('connected', () => {
+      console.log('-> connected')
+    })
+    // mongoose.set('debug', true)
   })
 
   after(() => {
-    mongoose.disconnect()
+    // mongoose.disconnect()
   })
 
   describe('getRoute', () => {
     it('should return a stop if it exists', sinon.test(async function () {
-      this.timeout(100000)
+      this.timeout(500000)
       const date = '2019-11-18T14:00:00Z'
       const start = (new Date(date)).getTime()
-      const result = await getRoute('Glacière', 'Jussieu', '2019-11-18T14:00:00Z')
-      console.log('result', result)
+      const result = await getRoute('Glacière', 'Gare du nord', '2019-11-18T14:00:00Z')
+      // console.log('result', result)
       console.log('result', result.map(r => r.name))
-      // console.log('result', result.map(r => r.paths.map(p => p.moreinfo)))
       console.log('times', result.map(r => (r.distance - start) / 1000 / 60))
       console.log('total time',
         (result[result.length - 1].distance - start) / 1000 / 60)
