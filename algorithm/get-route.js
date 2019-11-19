@@ -4,7 +4,7 @@ const {
   getStopsBetweenTwoStops,
   getNextStopTimes
 } = require('../queries/queries.js')
-const { Dijkstra, Node } = require('../algorithm/dijkstra.js')
+const { Dijkstra, Node } = require('./dijkstra.js')
 
 async function getRoute (startStopName, endStopName, date) {
   // getStop has a problem: stations are split in 2 because of the two ways
