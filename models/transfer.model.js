@@ -8,4 +8,7 @@ const TransferSchema = new Schema({
   min_transfer_time: { type: Number }
 })
 
+TransferSchema.index({ from_stop_id: 1, to_stop_id: 1 })
+TransferSchema.index({ from_stop_id: 1 })
+
 module.exports = mongoose.model('Transfer', TransferSchema)

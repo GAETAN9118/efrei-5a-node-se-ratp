@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+mongoose.set('useCreateIndex', true)
 const { Schema } = mongoose
 
 const StopSchema = new Schema({
@@ -13,5 +14,7 @@ const StopSchema = new Schema({
   location_type: { type: Number, min: 0, max: 4 },
   parent_station: { type: Number, ref: 'Stop' }
 })
+
+StopSchema.index({ stop_coords: '2dsphere' })
 
 module.exports = mongoose.model('Stop', StopSchema)

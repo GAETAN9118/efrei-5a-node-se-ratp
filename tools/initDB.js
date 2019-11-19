@@ -28,7 +28,15 @@ const csvPath = argv.p
 
 async function run () {
   try {
+    const answer = await ask('Are you sure you want to erase everything (N/y)')
+    if (answer !== 'Y' && answer !== 'y') {
+      console.log('exiting.')
+      process.exit(0)
+    }
+
     const dir = path.join(csvPath)
+    await Stop.deleteMany({})
+    await importCSV(path.join(dir, 'stops.txt'), stopsHandler)
     await StopTime.deleteMany({})
     await importCSV(path.join(dir, 'stop_times.txt'), stopTimesHandler, 100000)
     await Agency.deleteMany({})
@@ -39,8 +47,6 @@ async function run () {
     await importCSV(path.join(dir, 'calendar.txt'), calendarHandler)
     await Route.deleteMany({})
     await importCSV(path.join(dir, 'routes.txt'), routesHandler)
-    await Stop.deleteMany({})
-    await importCSV(path.join(dir, 'stops.txt'), stopsHandler)
     await Transfer.deleteMany({})
     await importCSV(path.join(dir, 'transfers.txt'), transfersHandler)
     await Trip.deleteMany({})
@@ -81,7 +87,7 @@ async function stopsHandler (array, counter) {
     stop_desc: orUndef(_.stop_desc),
     stop_coords: {
       type: 'Point',
-      coordinates: [_.stop_lon, _.stop_lat]
+      coordinates: [parseFloat(_.stop_lon), parseFloat(_.stop_lat)]
     },
     location_type: parseInt(_.location_type),
     parent_station: intOrUndef(_.parent_station)
@@ -103,7 +109,7 @@ function toValidDate (time) {
 
 function stopTimesHandler (array, counter) {
   const stoptimes = array.map(_ => ({
-    trip_id: parseInt(_.trip_id),
+    trip_id: _.trip_id,
     arrival_time: toValidDate(_.arrival_time),
     departure_time: toValidDate(_.departure_time),
     stop_id: parseInt(_.stop_id),
@@ -176,7 +182,7 @@ function transfersHandler (array, counter) {
 
 function tripsHandler (array, counter) {
   const trips = array.map(_ => ({
-    trip_id: parseInt(_.trip_id),
+    trip_id: _.trip_id,
     route_id: parseInt(_.route_id),
     service_id: parseInt(_.service_id),
     trip_headsign: orUndef(_.trip_headsign),
@@ -224,5 +230,24 @@ function importCSV (filePath, save, batchSize = 10000) {
       })
   })
 }
+
+const readline = require('readline')
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+})
+
+async function ask (question) {
+  return new Promise((resolve, reject) => {
+    rl.question(question, function (answer) {
+      resolve(answer)
+      rl.close()
+    })
+  })
+}
+
+
+
 
 run()

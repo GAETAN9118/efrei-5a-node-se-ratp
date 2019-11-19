@@ -7,4 +7,6 @@ const CalendarDatesSchema = new Schema({
   exception_type: { type: Number, min: 0, max: 3 }
 })
 
+CalendarDatesSchema.index({ service_id: 1, date: 1, exception_type: 1 })
+
 module.exports = mongoose.model('CalendarDates', CalendarDatesSchema)

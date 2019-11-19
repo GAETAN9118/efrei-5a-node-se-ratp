@@ -1,18 +1,23 @@
+const debug = require('debug')('ratp:algorithms:dijkstra')
 class Path {
-  constructor (cost, node) {
+  constructor (cost, node, moreinfo) {
     /** @member {Function} cost */
     this.cost = cost
     /** @member {Node} node */
     this.node = node
+    /** @member {Object} moreinfo */
+    this.moreinfo = moreinfo
   }
 }
 
 class Node {
   /**
    * @param {String} name
+   * @param {Object} stop
+   * @param {Function} discover
    * @param {Array<Path>} paths
    */
-  constructor (name, paths = []) {
+  constructor (name, stop = {}, discover = async () => {}, paths = []) {
     /** @member {Boolean} */
     this.visited = false
     /** @member {String} */
@@ -23,18 +28,23 @@ class Node {
     this.distance = Infinity
     /** @member {Node} visitedFrom */
     this.visitedFrom = null
+    /** @member {Function} discover */
+    this.discover = discover
+    /** @member {Object} stop */
+    this.stop = stop
   }
 
   /**
    * @param {Node} node
    * @param {Number} cost
+   * @param {Object} [moreinfo]
    */
-  addOrientedPath (node, cost) {
+  addOrientedPath (node, cost, moreinfo) {
     const current = this.paths.findIndex(n => n.node === node)
     if (current !== -1) {
       this.paths.splice(current, 1)
     }
-    this.paths.push(new Path(cost, node))
+    this.paths.push(new Path(cost, node, moreinfo))
   }
 
   /**
@@ -79,18 +89,24 @@ class Dijkstra {
    * that we need to go through to have the path
    * @param {Node} startNode
    * @param {Node} endNode
+   * @param {Number} initialDistance start date
    * @returns {Array<Node>}
    */
-  static async shortestPathFirst (startNode, endNode) {
-    if (startNode === endNode) return []
-    startNode.distance = 0
+  static async shortestPathFirst (startNode, endNode, initialDistance = 0) {
+    if (!startNode === endNode) return []
+
+    startNode.distance = initialDistance
     startNode.visited = true
+
+    debug('startNode distance', startNode.distance)
     const listOfNodes = [startNode]
 
     while (listOfNodes.length) {
       const curr = listOfNodes.shift()
+      await curr.discover(curr, curr.distance)
+      debug('curr paths', curr.paths.map(_ => _.node.name))
       curr.visited = true
-      if (curr === endNode) {
+      if (endNode === curr) {
         return Dijkstra.generatePath(endNode)
       }
 
@@ -101,6 +117,8 @@ class Dijkstra {
           listOfNodes.push(toVisit[i])
         }
       }
+
+      debug('listOfNodes length', listOfNodes.map(_ => _.name))
 
       listOfNodes.sort((a, b) => {
         if (a.distance > b.distance) {
@@ -143,7 +161,7 @@ class Dijkstra {
       out += `(${n.name}, ${n.distance}) => `
     }
     out += 'x'
-    console.log(out)
+    debug(out)
   }
 }
 
