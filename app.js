@@ -3,6 +3,10 @@ var express = require('express')
 var path = require('path')
 var cookieParser = require('cookie-parser')
 var logger = require('morgan')
+const mongoose = require('mongoose')
+
+const { DBPATH } = require('./params.js')
+mongoose.connect(DBPATH, { useNewUrlParser: true, useUnifiedTopology: true })
 
 var indexRouter = require('./routes/index')
 

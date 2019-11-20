@@ -11,7 +11,7 @@ const CalendarSchema = new Schema({
   saturday: { type: Number, enum: [0, 1] },
   sunday: { type: Number, enum: [0, 1] },
   start_date: Date,
-  endDate: Date
+  end_date: Date
 })
 
 module.exports = mongoose.model('Calendar', CalendarSchema)

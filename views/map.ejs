@@ -1,0 +1,173 @@
+<html>
+  <head>
+    <title>Coucou</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/2.13.1/OpenLayers.js"></script>
+    <script type="text/javascript" src="https://www.openstreetmap.org/openlayers/OpenStreetMap.js"></script>
+  </head>
+  <style>
+  html, body, #map {
+    height: 90%;
+    margin: 0;
+  }
+  </style>
+  <body>
+    <input type="text" id="startstop" placeholder="Start Stop">
+    <input type="text" id="endstop" placeholder="End Stop">
+    <button>Get the route</button>
+    <div id="map"></div>
+<script>
+
+function updateNodes (nodes) {
+  removeLayers()
+  nodes.forEach(({ stop_name, stop_coords: { coordinates } }) => {
+    addCircle(coordinates[1], coordinates[0], 100, 'blue', ''/*stop_name */)
+  })
+}
+
+  let _id
+  console.log('dom content loaded')
+  document
+    .querySelector('button')
+    .addEventListener('click', async function () {
+
+      /**
+       * @typedef Stop
+       * @property {Number} stop_code
+       * @property {String} stop_name
+       * @property {String} stop_desc
+       * @property {Object} stop_coords
+       * @property {String} stop_coords.type
+       * @property {Number[]} stop_coords.coordinates
+      */
+      /**
+       * @typedef Node
+       * @property {Boolean} visited
+       * @property {String} name
+       * @property {Array<Link>} paths
+       * @property {Number} distance
+       * @property {Node} visitedFrom
+       * @property {Function} discover
+       * @property {Stop} stop
+       */
+      const startStop = document.querySelector('#startstop').value
+      const endStop = document.querySelector('#endstop').value
+
+      /** @type {Array<Node>} */
+      const { values, id } = await fetch('/api/route?' + 
+      `start=${encodeURIComponent(startStop)}` +
+      `&stop=${encodeURIComponent(endStop)}`)
+            .then(response => response.json())
+      
+      _id = id
+      console.log('data', values)
+
+      if (!values) return
+
+      updateNodes(values.map(_ => _.stop))
+
+      setInterval(async () => {
+        const values = await fetch(`/api/route/updates/${_id}`)
+          .then(response => response.json())
+
+        updateNodes(values.map(_ => _.stop))
+      }, 1000)
+    })
+
+  var map;
+  var standard_zoom = 10;
+  var all_layers = [];
+
+  var standard_style = {
+    strokeColor: 'black',
+    strokeOpacity: 1,
+    strokeWidth: 2,
+    fillOpacity: 0.2,
+    fillColor: "${color}"
+  }
+
+  let topLeft = [48.902913, 2.248338]
+  let topRight = [48.907610, 2.428951]
+  let bottomLeft = [48.807731, 2.237595]
+  let bottomRight = [48.805200, 2.439271]
+
+
+  function init() {
+    map = new OpenLayers.Map("map", {
+      controls: [
+        new OpenLayers.Control.Navigation(),
+        new OpenLayers.Control.PanZoomBar(),
+        //new OpenLayers.Control.LayerSwitcher(),
+        new OpenLayers.Control.Attribution()
+      ],
+      maxExtent: new OpenLayers.Bounds(),
+      // maxResolution: 156543.0399,
+      numZoomLevels: 19,
+      units: 'm',
+      projection: new OpenLayers.Projection("EPSG:900913"),
+      displayProjection: new OpenLayers.Projection("EPSG:4326")
+    });
+
+    // Define the map layer
+    // Here we use a predefined layer that will be kept up to date with URL changes
+    map.addLayer(new OpenLayers.Layer.OSM.Mapnik());
+    map.zoomToMaxExtent()
+  }
+
+  function setCenter(lat, lng, zoom) {
+    map.setCenter(
+      new OpenLayers.LonLat(lng || 2.3522, lat || 48.8566).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+      zoom || 11
+    );
+  }
+
+  function addCircle(lat, lng, radius, color, name) {
+    var lonLat = new OpenLayers.LonLat(lng, lat).transform(
+      new OpenLayers.Projection("EPSG:4326"),
+      map.getProjectionObject()
+    );
+
+    // map.setCenter(lonLat, standard_zoom);
+
+    var layer = new OpenLayers.Layer.Vector("", {
+      styleMap: new OpenLayers.StyleMap(
+        {
+          ...standard_style,
+          label: "${name}"
+        }
+      )
+    });
+    var point = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat);
+
+    var circle = OpenLayers.Geometry.Polygon.createRegularPolygon(point, radius, 40, 0);
+
+
+
+    layer.addFeatures([new OpenLayers.Feature.Vector(circle,
+      {
+        name,
+        color: color
+      }
+    )]);
+    map.addLayer(layer);
+    all_layers.push(layer);
+  }
+
+  function removeLayers() {
+    while (all_layers.length > 0) {
+      map.removeLayer(all_layers.pop());
+    }
+  }
+
+  function addCircles() {
+    setCenter()
+    /*addCircle(-27.0641663, -52.7493394, 10000, 'red', 'hi')
+    addCircle(-27.0230563, -52.7493394, 7000, 'yellow')
+    addCircle(-27.0230563, -52.7493394, 4000, 'green')
+    addCircle(-27.0230563, -52.7493394, 1000, 'blue') */
+  }
+
+  init()
+  addCircles()
+</script>
+  </body>
+</html>

@@ -6,7 +6,7 @@ const {
 } = require('../queries/queries.js')
 const { Dijkstra, Node } = require('./dijkstra.js')
 
-async function getRoute (startStopName, endStopName, date) {
+async function * getRoute (startStopName, endStopName, date) {
   // getStop has a problem: stations are split in 2 because of the two ways
   // we need to use getStops which retrieves all stations that match the name
   // but, we should (TODO it's not done yet) restrict station names based on some
@@ -27,6 +27,8 @@ async function getRoute (startStopName, endStopName, date) {
     new Node(stop.stop_name, stop, (node, time) => discover(node, nodes, stop, time))
   )
 
+  yield nodes // we give a first result which is the list of points
+
   const startNodes = startStops.map(ss => nodes.find(n => n.stop._id === ss._id))
   // we create a root node pointing to all the first nodes
   const startNode = new Node('Start')
@@ -38,11 +40,12 @@ async function getRoute (startStopName, endStopName, date) {
   createEndNodeRoutes(endNode, endNodes)
 
   const out = await Dijkstra.shortestPathFirst(startNode, endNode, date.getTime())
+
   if (out.length) {
     out.shift() // remove the first element, only here to simplify the algorithm
     out.pop() // remove the last element, only here to simplify the algorithm
   }
-  return out
+  yield out
 }
 
 function createStartNodeRoutes (node, startNodes) {

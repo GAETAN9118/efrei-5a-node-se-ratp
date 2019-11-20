@@ -40,7 +40,7 @@ describe('get.route.controller.js', () => {
   })
 
   after(() => {
-    // mongoose.disconnect()
+    mongoose.disconnect()
   })
 
   describe('getRoute', () => {
