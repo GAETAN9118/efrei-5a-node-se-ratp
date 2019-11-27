@@ -37,7 +37,7 @@ function getStopsBetweenTwoStops (s1, s2) {
         $center: [[lonCenter, latCenter], radius]
       }
     }
-  })
+  }).lean()
 }
 
 /**

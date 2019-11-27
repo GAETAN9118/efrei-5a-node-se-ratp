@@ -16,13 +16,33 @@
     <button>Get the route</button>
     <div id="map"></div>
 <script>
+  /**
+   * @typedef Path
+   * @property {Function} cost
+   * @property {Node} node
+   * @property {Number} stop_id
+   * @property {Object} moreinfo
+   */
 
-function updateNodes (nodes) {
-  removeLayers()
-  nodes.forEach(({ stop_name, stop_coords: { coordinates } }) => {
-    addCircle(coordinates[1], coordinates[0], 100, 'blue', ''/*stop_name */)
-  })
-}
+  /**
+   * @typedef Stop
+   * @property {Number} stop_code
+   * @property {String} stop_name
+   * @property {String} stop_desc
+   * @property {Object} stop_coords
+   * @property {String} stop_coords.type
+   * @property {Number[]} stop_coords.coordinates
+  */
+  /**
+   * @typedef Node
+   * @property {Boolean} visited
+   * @property {String} name
+   * @property {Array<Path>} paths
+   * @property {Number} distance
+   * @property {Node} visitedFrom
+   * @property {Function} discover
+   * @property {Stop} stop
+   */
 
   let _id
   console.log('dom content loaded')
@@ -30,25 +50,6 @@ function updateNodes (nodes) {
     .querySelector('button')
     .addEventListener('click', async function () {
 
-      /**
-       * @typedef Stop
-       * @property {Number} stop_code
-       * @property {String} stop_name
-       * @property {String} stop_desc
-       * @property {Object} stop_coords
-       * @property {String} stop_coords.type
-       * @property {Number[]} stop_coords.coordinates
-      */
-      /**
-       * @typedef Node
-       * @property {Boolean} visited
-       * @property {String} name
-       * @property {Array<Link>} paths
-       * @property {Number} distance
-       * @property {Node} visitedFrom
-       * @property {Function} discover
-       * @property {Stop} stop
-       */
       const startStop = document.querySelector('#startstop').value
       const endStop = document.querySelector('#endstop').value
 
@@ -63,13 +64,18 @@ function updateNodes (nodes) {
 
       if (!values) return
 
-      updateNodes(values.map(_ => _.stop))
+      updateNodes(values)
 
-      setInterval(async () => {
-        const values = await fetch(`/api/route/updates/${_id}`)
+      const inter = setInterval(async () => {
+        const { values, done, goodPath } = await fetch(`/api/route/updates/${_id}`)
           .then(response => response.json())
 
-        updateNodes(values.map(_ => _.stop))
+        updateNodes(values)
+        if (done) {
+          clearInterval(inter)
+          console.log('goodPath', goodPath)
+          traceGoodPath(goodPath)
+        }
       }, 1000)
     })
 
@@ -116,15 +122,102 @@ function updateNodes (nodes) {
   function setCenter(lat, lng, zoom) {
     map.setCenter(
       new OpenLayers.LonLat(lng || 2.3522, lat || 48.8566).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
-      zoom || 11
-    );
+      zoom || 12
+    )
+  }
+
+  function compareCoords ([refStart, refStop], [start, stop]) {
+    return (refStart[0] === start[0] && refStart[1] === start[1] && refStop[0] === stop[0] && refStop[1] === stop[1]) ||
+      (refStart[0] === stop[0] && refStart[1] === stop[1] && refStop[0] === start[0] && refStop[1] === start[1])
+  }
+
+  const alreadyDefinedPaths = []
+  const listOfNodes = []
+
+  /**
+   * @param {Node[]} nodes
+   */
+  function updateNodes (nodes) {
+    // removeLayers()
+    // alreadyDefined.length = 0
+    nodes.forEach(node => {
+      const stop = node.stop
+      const coordsStart = stop.stop_coords.coordinates
+      const existingNode = listOfNodes.find(n => n.stop_id === stop._id)
+      if (!existingNode) {
+        addCircle(coordsStart[1], coordsStart[0], 50, 'blue', ''/*stop_name */)
+        listOfNodes.push({
+          stop_id: stop._id,
+          node
+        })
+      }
+      node.paths.forEach(path => {
+        const endNode = nodes.find(n => n.stop._id === path.stop_id)
+        if (!endNode) return
+        const coordsEnd = endNode.stop.stop_coords.coordinates
+        const pathAlreadyExists = alreadyDefinedPaths
+          .find(_ => compareCoords(_, [coordsStart, coordsEnd]))
+        
+        if (pathAlreadyExists) return
+        
+        console.log('path between', stop.stop_name, path.stop_id, node.visitedFrom === path.stop_id)
+
+        alreadyDefinedPaths.push([coordsStart, coordsEnd])
+        addLine(coordsStart, coordsEnd)
+      })
+    })
+  }
+
+  function traceGoodPath (nodes) {
+    let prec = null
+    nodes.forEach(node => {
+      console.log('trace path !')
+      const stop = node.stop
+      const coordsStart = stop.stop_coords.coordinates
+      addCircle(coordsStart[1], coordsStart[0], 50, 'red', stop.stop_name)
+      if (prec) {
+        addLine(coordsStart, prec, 'red')
+      }
+      prec = coordsStart
+    })
+  }
+
+  /**
+   * @param {Array<Number>} start (lon,lat)
+   * @param {Array<Number>} end   (lon,lat)
+   */
+  function addLine (start, end, color = 'green') {
+    var startLonLat = new OpenLayers.LonLat(start[0], start[1]).transform(
+      new OpenLayers.Projection("EPSG:4326"),
+      map.getProjectionObject()
+    )
+    var startPoint = new OpenLayers.Geometry.Point(startLonLat.lon, startLonLat.lat)
+    var endLonLat = new OpenLayers.LonLat(end[0], end[1]).transform(
+      new OpenLayers.Projection("EPSG:4326"),
+      map.getProjectionObject()
+    )
+    var endPoint = new OpenLayers.Geometry.Point(endLonLat.lon, endLonLat.lat)
+
+    const style = { ...standard_style }
+    style.strokeColor = color 
+
+    var layer = new OpenLayers.Layer.Vector("", {
+      styleMap: new OpenLayers.StyleMap(style)
+    })
+
+    const line = new OpenLayers.Geometry.LineString([startPoint, endPoint])
+    
+    layer.addFeatures([new OpenLayers.Feature.Vector(line)])
+
+    map.addLayer(layer)
+    all_layers.push(layer)
   }
 
   function addCircle(lat, lng, radius, color, name) {
     var lonLat = new OpenLayers.LonLat(lng, lat).transform(
       new OpenLayers.Projection("EPSG:4326"),
       map.getProjectionObject()
-    );
+    )
 
     // map.setCenter(lonLat, standard_zoom);
 
@@ -135,21 +228,19 @@ function updateNodes (nodes) {
           label: "${name}"
         }
       )
-    });
-    var point = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat);
+    })
+    var point = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat)
 
-    var circle = OpenLayers.Geometry.Polygon.createRegularPolygon(point, radius, 40, 0);
-
-
+    var circle = OpenLayers.Geometry.Polygon.createRegularPolygon(point, radius, 40, 0)
 
     layer.addFeatures([new OpenLayers.Feature.Vector(circle,
       {
         name,
         color: color
       }
-    )]);
-    map.addLayer(layer);
-    all_layers.push(layer);
+    )])
+    map.addLayer(layer)
+    all_layers.push(layer)
   }
 
   function removeLayers() {

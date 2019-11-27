@@ -21,6 +21,7 @@ async function * getRoute (startStopName, endStopName, date) {
 
   date = new Date(date) // has to be ISO date
 
+  /** @type {Stop[]} */
   const between = await getStopsBetweenTwoStops(startStops[0], endStops[0])
 
   const nodes = between.map(stop =>

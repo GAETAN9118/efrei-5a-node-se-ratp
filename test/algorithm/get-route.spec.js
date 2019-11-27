@@ -23,7 +23,7 @@ function connect () {
  *  * the params.js file should be correct
  */
 
-describe('get.route.controller.js', () => {
+describe('get-route.js', () => {
   before(() => {
     connect()
     mongoose.connection.on('disconnected', () => {
@@ -48,8 +48,9 @@ describe('get.route.controller.js', () => {
       this.timeout(500000)
       const date = '2019-11-18T14:00:00Z'
       const start = (new Date(date)).getTime()
-      const result = await getRoute('Glacière', 'Gare du nord', '2019-11-18T14:00:00Z')
-      // console.log('result', result)
+      const route = getRoute('Glacière', 'Jussieu', date)
+      await route.next()
+      const { value: result } = await route.next()
       console.log('result', result.map(r => r.name))
       console.log('times', result.map(r => (r.distance - start) / 1000 / 60))
       console.log('total time',

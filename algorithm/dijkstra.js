@@ -22,7 +22,7 @@ class Node {
     this.visited = false
     /** @member {String} */
     this.name = name
-    /** @member {Array<Link>} paths */
+    /** @member {Array<Path>} paths */
     this.paths = paths
     /** @member {Number} distance */
     this.distance = Infinity
@@ -32,6 +32,20 @@ class Node {
     this.discover = discover
     /** @member {Object} stop */
     this.stop = stop
+  }
+
+  export () {
+    return {
+      visited: this.visited,
+      name: this.name,
+      paths: this.paths.map(p => ({
+        stop_id: p.node.stop._id,
+        moreinfo: p.moreinfo
+      })),
+      distance: this.distance,
+      visitedFrom: this.visitedFrom ? this.visitedFrom.stop ? this.visitedFrom.stop._id : null : null,
+      stop: this.stop
+    }
   }
 
   /**

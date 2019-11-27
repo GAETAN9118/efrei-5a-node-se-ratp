@@ -20,25 +20,50 @@ router.get('/api/stop', async function (req, res, next) {
   res.json(stops)
 })
 
-const currentRoutes = {}
-const nodesArrays = {}
+/** @type {Node[]} */
+const nodesArrays = []
+
+function genOutputNodes (nodes) {
+  return nodes.map(node => node.export())
+}
 
 router.get('/api/route/updates/:id', async function (req, res) {
-  const { id } = req.params
-  res.json(nodesArrays[id])
+  const id = parseInt(req.params.id)
+  if (!nodesArrays[id]) {
+    res.status(404)
+    res.send('not found')
+    return
+  }
+
+  console.log('done', nodesArrays[id].done)
+  res.json({
+    values: genOutputNodes(nodesArrays[id]),
+    goodPath: nodesArrays[id].goodPath ? genOutputNodes(nodesArrays[id].goodPath) : [],
+    done: nodesArrays[id].done
+  })
+
+  if (nodesArrays[id].done) {
+    nodesArrays.splice(id, 1)
+  }
 })
 
 router.get('/api/route', async function (req, res) {
   const { start, stop } = req.query
-  console.log('stop1')
   const id = Math.floor(Math.random() * 1000) + 1
 
-  currentRoutes[id] = getRoute(start, stop, new Date())
-  const { value } = await currentRoutes[id].next()
-  nodesArrays[id] = value
-  console.log('currentRoutes', value)
+  const route = getRoute(start, stop, new Date())
+  const { value } = await route.next()
+  const now = Date.now()
+  route.next()
+    .then((result) => {
+      console.log('finished, elapsed:', (Date.now() - now) / 1000)
+      nodesArrays[id].done = true
+      nodesArrays[id].goodPath = result.value
+    })
 
-  res.json({ values: value, id })
+  nodesArrays[id] = value
+
+  res.json({ values: genOutputNodes(nodesArrays[id]), id, done: false })
 })
 
 module.exports = router
